@@ -1,0 +1,5 @@
+.env
+.tmdb_cache.json
+key.txt
+backdrops/
+__pycache__/

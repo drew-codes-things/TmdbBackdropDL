@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tmdb-backdrop-downloader"
+version = "1.0.0"
+description = "Download backdrop and poster images from TMDB."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+dependencies = ["requests", "tqdm", "python-dotenv"]
+
+[project.scripts]
+tmdb-backdrop-downloader = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
