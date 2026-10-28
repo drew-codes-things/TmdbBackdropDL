@@ -130,12 +130,6 @@ def check_api_key(api_key: str) -> bool:
 
 
 def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
-    """
-    Search TMDB for a title and return matching movie/TV results.
-
-    Guards against tmdb_get returning None (all retries exhausted) to avoid
-    an AttributeError on .raise_for_status() being called on None.
-    """
     cache = _load_cache()
     cache_key = f"{type_filter}:{query.strip().lower()}"
     if cache_key in cache["search"]:
@@ -163,12 +157,6 @@ def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
 
 
 def get_images(api_key: str, media_id: int, media_type: str, lang_filter: str = "any") -> dict:
-    """
-    Fetch backdrop and poster images for a TMDB title.
-
-    Guards against tmdb_get returning None (all retries exhausted) to avoid
-    an AttributeError on .raise_for_status() being called on None.
-    """
     cache = _load_cache()
     cache_key = f"{media_type}:{media_id}"
     if cache_key in cache["images"]:
@@ -200,7 +188,7 @@ def get_images(api_key: str, media_id: int, media_type: str, lang_filter: str = 
     elif lang_filter == "none":
         backdrops = [b for b in backdrops if b.get("iso_639_1") is None]
         posters   = [p for p in posters   if p.get("iso_639_1") is None]
-    else:
+    elif lang_filter != "all":
         backdrops = [b for b in backdrops if b.get("iso_639_1") in ("en", None)]
         posters   = [p for p in posters   if p.get("iso_639_1") in ("en", None)]
 
@@ -334,16 +322,6 @@ def display_backdrops(backdrops: list, title: str) -> None:
 
 
 def process_title(api_key, query, args, image_size, type_filter="any", index=None, total=None):
-    """
-    Search for a single title and:
-      - in dry-run mode: print what would be matched without downloading.
-      - otherwise: download all backdrops (and posters if requested).
-    index/total are used for the [N/total] counter in batch mode.
-
-    Batch auto-selection strategy: results are sorted by vote_count descending
-    before picking index 0, so heavily-voted (high-confidence) entries are
-    preferred over obscure partial-name matches that happen to appear first.
-    """
     prefix = f"[{index}/{total}] " if (index is not None and total is not None) else ""
 
     results = search_media(api_key, query, type_filter)
