@@ -114,7 +114,7 @@ def tmdb_get(url, params, retries=5):
                 time.sleep(wait)
                 continue
             return r
-        except requests.RequestException as e:
+        except requests.RequestException:
             if attempt == retries - 1:
                 raise
             time.sleep(2 ** attempt)
