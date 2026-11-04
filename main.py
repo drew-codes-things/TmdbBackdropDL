@@ -249,7 +249,8 @@ def download_image(url: str, dest: str) -> bool:
             r.raise_for_status()
             total = int(r.headers.get("content-length", 0))
             os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
-            with open(dest, "wb") as f, tqdm(
+            part = dest + ".part"
+            with open(part, "wb") as f, tqdm(
                 desc=os.path.basename(dest),
                 total=total,
                 unit="iB",
@@ -260,8 +261,10 @@ def download_image(url: str, dest: str) -> bool:
                 for chunk in r.iter_content(1024):
                     f.write(chunk)
                     bar.update(len(chunk))
+            os.replace(part, dest)
             return True
         except requests.RequestException as e:
+            _remove_partial(dest)
             if attempt == 4:
                 print(f"  Download error: {e}")
                 return False
@@ -269,9 +272,17 @@ def download_image(url: str, dest: str) -> bool:
             print(f"  Transient download error ({attempt + 1}/5): {e} -> retrying in {wait}s...")
             time.sleep(wait)
         except IOError as e:
+            _remove_partial(dest)
             print(f"  File write error: {e}")
             return False
     return False
+
+
+def _remove_partial(dest: str) -> None:
+    try:
+        os.remove(dest + ".part")
+    except OSError:
+        pass
 
 
 def bulk_download(urls_and_paths: list) -> None:

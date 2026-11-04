@@ -145,7 +145,7 @@ backdrops/
 ## File Structure
 
 ```
-TMDB-Backdrop-Downloader/
+TmdbBackdropDL/
   main.py              Main script
   requirements.txt     Python dependencies
   .env.example         Example environment file
