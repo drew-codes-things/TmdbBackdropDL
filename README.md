@@ -75,6 +75,7 @@ Prints which TMDB title each line would match without downloading any files.
 | `--type <any/movie/tv>` | Filter search results by media type (default: `any`) |
 | `--dry-run` | Batch only: preview matches without downloading |
 | `--workers <n>` | Concurrent download/size-estimate threads (default: `4`) |
+| `--refresh` | Ignore cached TMDB answers and ask TMDB again |
 
 ---
 
@@ -137,7 +138,7 @@ Folder names carry the release year in both modes, so two titles with the same n
 
 - Downloads run concurrently via `ThreadPoolExecutor` (`--workers`, default 4)
 - A total-size estimate (via HEAD requests) is printed before each batch of downloads
-- TMDB search and image lookups are cached to `.tmdb_cache.json` and reused across runs
+- TMDB search and image lookups are cached to `.tmdb_cache.json` and reused for a day; empty answers are never cached, and `--refresh` ignores the cache for one run
 - Rate-limited requests (HTTP 429) are automatically retried with the `Retry-After` header delay
 - Failed downloads are retried up to 5 times with exponential backoff
 - Batch auto-selection picks the result with the highest `vote_count` to avoid obscure partial-name matches

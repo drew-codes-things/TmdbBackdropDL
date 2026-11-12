@@ -56,9 +56,11 @@ MAX_RESULTS  = 8
 PREFERRED_BACKDROP_WIDTH  = 1920
 PREFERRED_BACKDROP_HEIGHT = 1080
 
-CACHE_FILE       = os.path.join(SCRIPT_DIR, ".tmdb_cache.json")
-DOWNLOAD_WORKERS = 4
-_cache           = None
+CACHE_FILE            = os.path.join(SCRIPT_DIR, ".tmdb_cache.json")
+CACHE_MAX_AGE_SECONDS = 24 * 60 * 60
+CACHE_REFRESH         = False
+DOWNLOAD_WORKERS      = 4
+_cache                = None
 
 
 def _load_cache():
@@ -82,6 +84,22 @@ def _save_cache():
             json.dump(_cache, f)
     except OSError:
         pass
+
+
+def _cache_get(section: str, key: str):
+    if CACHE_REFRESH:
+        return None
+    entry = _load_cache()[section].get(key)
+    if not isinstance(entry, dict) or not isinstance(entry.get("saved"), (int, float)):
+        return None
+    if time.time() - entry["saved"] > CACHE_MAX_AGE_SECONDS:
+        return None
+    return entry.get("data")
+
+
+def _cache_put(section: str, key: str, data) -> None:
+    _load_cache()[section][key] = {"saved": time.time(), "data": data}
+    _save_cache()
 
 
 def human_size(n: float) -> str:
@@ -146,10 +164,10 @@ def check_api_key(api_key: str) -> bool:
 
 
 def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
-    cache = _load_cache()
     cache_key = f"{type_filter}:{query.strip().lower()}"
-    if cache_key in cache["search"]:
-        return cache["search"][cache_key]
+    cached = _cache_get("search", cache_key)
+    if cached is not None:
+        return cached
     try:
         r = tmdb_get(
             f"{TMDB_BASE}/search/multi",
@@ -164,8 +182,8 @@ def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
             results = [x for x in results if x.get("media_type") == "movie"]
         elif type_filter == "tv":
             results = [x for x in results if x.get("media_type") == "tv"]
-        cache["search"][cache_key] = results
-        _save_cache()
+        if results:
+            _cache_put("search", cache_key, results)
         return results
     except requests.RequestException as e:
         print(f"  Search error: {hide_api_key(e)}")
@@ -173,11 +191,9 @@ def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
 
 
 def get_images(api_key: str, media_id: int, media_type: str, lang_filter: str = "any") -> dict:
-    cache = _load_cache()
     cache_key = f"{media_type}:{media_id}"
-    if cache_key in cache["images"]:
-        data = cache["images"][cache_key]
-    else:
+    data = _cache_get("images", cache_key)
+    if data is None:
         try:
             r = tmdb_get(
                 f"{TMDB_BASE}/{media_type}/{media_id}/images",
@@ -191,9 +207,9 @@ def get_images(api_key: str, media_id: int, media_type: str, lang_filter: str = 
         except requests.RequestException as e:
             print(f"  Error fetching images: {hide_api_key(e)}")
             return {"backdrops": [], "posters": []}
-        cache["images"][cache_key] = {"backdrops": data.get("backdrops", []),
-                                      "posters": data.get("posters", [])}
-        _save_cache()
+        data = {"backdrops": data.get("backdrops", []), "posters": data.get("posters", [])}
+        if data["backdrops"] or data["posters"]:
+            _cache_put("images", cache_key, data)
 
     backdrops = data.get("backdrops", [])
     posters   = data.get("posters",   [])
@@ -449,6 +465,8 @@ def main():
                         help="Batch only: print which title each line would match without downloading anything")
     parser.add_argument("--workers", type=int, default=4,
                         help="Concurrent download/size-estimate threads (default: 4)")
+    parser.add_argument("--refresh", action="store_true",
+                        help="Ignore cached TMDB answers and ask TMDB again")
     args = parser.parse_args()
 
     if args.dry_run and not args.batch:
@@ -456,8 +474,9 @@ def main():
 
     if args.workers < 1:
         parser.error("--workers must be at least 1")
-    global DOWNLOAD_WORKERS
+    global DOWNLOAD_WORKERS, CACHE_REFRESH
     DOWNLOAD_WORKERS = args.workers
+    CACHE_REFRESH = args.refresh
 
     api_key = get_api_key()
     if not check_api_key(api_key):
