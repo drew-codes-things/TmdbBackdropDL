@@ -98,7 +98,7 @@ Backdrops are sorted with 1920x1080 images first, then by closest resolution to 
 ### Standard mode
 ```
 backdrops/
-  Movie_Title/
+  Movie_Title_2023/
     backdrop_001.jpg
     backdrop_002.jpg
     poster_001.jpg
@@ -108,15 +108,17 @@ backdrops/
 ```
 backdrops/
   Movies/
-    Movie_Title_(2023)/
+    Movie_Title_2023/
       backdrop_001.jpg
   TV/
-    Show_Title_(2021)/
+    Show_Title_2021/
       backdrop_001.jpg
   Anime/
-    Anime_Title_(2020)/
+    Anime_Title_2020/
       backdrop_001.jpg
 ```
+
+Folder names carry the release year in both modes, so two titles with the same name (Dune 1984 and Dune 2021) never share a folder. Titles with no known year use the title alone.
 
 ---
 

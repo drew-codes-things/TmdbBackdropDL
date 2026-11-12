@@ -232,10 +232,10 @@ def sanitize(name: str) -> str:
 
 def get_output_dir(base_dir: str, media_type: str, title: str, year: str,
                   organised: bool, genre_hint: str = "") -> str:
-    safe     = sanitize(title)
-    year_tag = f" ({year})" if year and year != "????" else ""
+    year_tag    = f" ({year})" if year and year != "????" else ""
+    folder_name = sanitize(f"{title}{year_tag}")
     if not organised:
-        return os.path.join(base_dir, safe)
+        return os.path.join(base_dir, folder_name)
 
     genre_tokens = {tok for tok in re.split(r"[\s,|/]+", genre_hint.strip()) if tok}
     if ("anime" in genre_hint.lower()) or ("16" in genre_tokens):
@@ -245,7 +245,6 @@ def get_output_dir(base_dir: str, media_type: str, title: str, year: str,
     else:
         category = "Movies"
 
-    folder_name = sanitize(f"{title}{year_tag}")
     return os.path.join(base_dir, category, folder_name)
 
 
