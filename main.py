@@ -10,10 +10,26 @@ from tqdm import tqdm
 
 import logging
 
+API_KEY_IN_URL = re.compile(r"(api_key=)[^&\s'\"]+")
+
+
+def hide_api_key(message) -> str:
+    return API_KEY_IN_URL.sub(r"\1<hidden>", str(message))
+
+
+class HideApiKeyFilter(logging.Filter):
+    def filter(self, record):
+        record.msg = hide_api_key(record.getMessage())
+        record.args = ()
+        return True
+
+
 _log_handlers = [logging.StreamHandler()]
 _log_file = os.environ.get("LOG_FILE")
 if _log_file:
     _log_handlers.append(logging.FileHandler(_log_file))
+for _handler in _log_handlers:
+    _handler.addFilter(HideApiKeyFilter())
 logging.basicConfig(
     level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(levelname)s: %(message)s",
@@ -99,13 +115,6 @@ def get_api_key() -> str:
     logger.error("No TMDB API key found.")
     print(f"       Create {ENV_PATH} with: TMDB_API_KEY=your_key")
     sys.exit(1)
-
-
-API_KEY_IN_URL = re.compile(r"(api_key=)[^&\s'\"]+")
-
-
-def hide_api_key(message) -> str:
-    return API_KEY_IN_URL.sub(r"\1<hidden>", str(message))
 
 
 def tmdb_get(url, params, retries=5):
