@@ -82,8 +82,8 @@ def _save_cache():
     try:
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(_cache, f)
-    except OSError:
-        pass
+    except OSError as e:
+        logger.warning(f"Could not save the TMDB cache to {CACHE_FILE}: {e}")
 
 
 def _cache_get(section: str, key: str):
