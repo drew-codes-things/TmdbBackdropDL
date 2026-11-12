@@ -101,6 +101,13 @@ def get_api_key() -> str:
     sys.exit(1)
 
 
+API_KEY_IN_URL = re.compile(r"(api_key=)[^&\s'\"]+")
+
+
+def hide_api_key(message) -> str:
+    return API_KEY_IN_URL.sub(r"\1<hidden>", str(message))
+
+
 def tmdb_get(url, params, retries=5):
     for attempt in range(retries):
         try:
@@ -152,7 +159,7 @@ def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
         _save_cache()
         return results
     except requests.RequestException as e:
-        print(f"  Search error: {e}")
+        print(f"  Search error: {hide_api_key(e)}")
         return []
 
 
@@ -173,7 +180,7 @@ def get_images(api_key: str, media_id: int, media_type: str, lang_filter: str = 
             r.raise_for_status()
             data = r.json()
         except requests.RequestException as e:
-            print(f"  Error fetching images: {e}")
+            print(f"  Error fetching images: {hide_api_key(e)}")
             return {"backdrops": [], "posters": []}
         cache["images"][cache_key] = {"backdrops": data.get("backdrops", []),
                                       "posters": data.get("posters", [])}
