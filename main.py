@@ -243,6 +243,7 @@ def sanitize(name: str) -> str:
     return re.sub(r'[<>:"/\\|?*\[\]()]', "", name).strip().replace(" ", "_")
 
 
+UNTITLED_FOLDER    = "Untitled"
 ANIMATION_GENRE_ID = "16"
 ANIME_LANGUAGE     = "ja"
 
@@ -250,7 +251,7 @@ ANIME_LANGUAGE     = "ja"
 def get_output_dir(base_dir: str, media_type: str, title: str, year: str,
                   organised: bool, genre_hint: str = "", original_language: str = "") -> str:
     year_tag    = f" ({year})" if year and year != "????" else ""
-    folder_name = sanitize(f"{title}{year_tag}")
+    folder_name = sanitize(f"{title}{year_tag}").lstrip(".") or UNTITLED_FOLDER
     if not organised:
         return os.path.join(base_dir, folder_name)
 
