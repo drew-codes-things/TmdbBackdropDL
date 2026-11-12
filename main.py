@@ -334,11 +334,13 @@ def bulk_download(urls_and_paths: list) -> None:
     print(f"  Done -> {ok} saved, {fail} failed.")
 
 
-def pick_int(prompt: str, lo: int, hi: int):
+def pick_int(prompt: str, lo: int, hi: int, default=None):
     while True:
         raw = input(prompt).strip()
         if raw.lower() in ("q", "quit", "exit"):
             return None
+        if not raw and default is not None:
+            return default
         if raw.isdigit() and lo <= int(raw) <= hi:
             return int(raw)
         print(f"  Please enter a number between {lo} and {hi}, or q to go back.")
@@ -501,8 +503,11 @@ def main():
         if args.dry_run:
             image_size = DEFAULT_SIZE
         else:
-            size_choice = pick_int("  Choose size (default 1 = original): ", 1, len(SIZES))
-            image_size  = SIZES[(size_choice - 1) if size_choice else 0]
+            size_choice = pick_int("  Choose size (default 1 = original): ", 1, len(SIZES), default=1)
+            if size_choice is None:
+                print("  Done.")
+                return
+            image_size  = SIZES[size_choice - 1]
         print()
         run_batch(api_key, args, image_size)
         return
@@ -512,8 +517,11 @@ def main():
     print("  Image size options:")
     for i, s in enumerate(SIZES, 1):
         print(f"    {i}. {s}")
-    size_choice = pick_int("  Choose size (default 1 = original): ", 1, len(SIZES))
-    image_size  = SIZES[(size_choice - 1) if size_choice else 0]
+    size_choice = pick_int("  Choose size (default 1 = original): ", 1, len(SIZES), default=1)
+    if size_choice is None:
+        print("  Done.")
+        return
+    image_size  = SIZES[size_choice - 1]
     print()
 
     while True:
@@ -549,9 +557,11 @@ def main():
         print("    2. English only")
         print("    3. Language-neutral only")
         print("    4. All")
-        lang_choice = pick_int("  Choose filter (default 1): ", 1, 4)
+        lang_choice = pick_int("  Choose filter (default 1): ", 1, 4, default=1)
+        if lang_choice is None:
+            continue
         lang_map    = {1: "any", 2: "en", 3: "none", 4: "all"}
-        lang_filter = lang_map.get(lang_choice or 1, "any")
+        lang_filter = lang_map[lang_choice]
 
         images    = get_images(api_key, media_id, media_type, lang_filter)
         backdrops = pick_best_backdrop(images["backdrops"])
