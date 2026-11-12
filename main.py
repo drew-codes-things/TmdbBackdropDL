@@ -156,11 +156,8 @@ def tmdb_get(url, params, retries=5):
 
 
 def check_api_key(api_key: str) -> bool:
-    try:
-        r = tmdb_get(f"{TMDB_BASE}/configuration", {"api_key": api_key})
-        return r is not None and r.status_code == 200
-    except requests.RequestException:
-        return False
+    r = tmdb_get(f"{TMDB_BASE}/configuration", {"api_key": api_key})
+    return r is not None and r.status_code == 200
 
 
 def search_media(api_key: str, query: str, type_filter: str = "any") -> list:
@@ -487,7 +484,12 @@ def main():
     CACHE_REFRESH = args.refresh
 
     api_key = get_api_key()
-    if not check_api_key(api_key):
+    try:
+        key_accepted = check_api_key(api_key)
+    except requests.RequestException as e:
+        logger.error(f"Could not reach TMDB, check the network connection: {hide_api_key(e)}")
+        sys.exit(1)
+    if not key_accepted:
         logger.error(f"API key rejected by TMDB. Check TMDB_API_KEY in {ENV_PATH}.")
         sys.exit(1)
 
