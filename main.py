@@ -246,15 +246,20 @@ def sanitize(name: str) -> str:
     return re.sub(r'[<>:"/\\|?*\[\]()]', "", name).strip().replace(" ", "_")
 
 
+ANIMATION_GENRE_ID = "16"
+ANIME_LANGUAGE     = "ja"
+
+
 def get_output_dir(base_dir: str, media_type: str, title: str, year: str,
-                  organised: bool, genre_hint: str = "") -> str:
+                  organised: bool, genre_hint: str = "", original_language: str = "") -> str:
     year_tag    = f" ({year})" if year and year != "????" else ""
     folder_name = sanitize(f"{title}{year_tag}")
     if not organised:
         return os.path.join(base_dir, folder_name)
 
     genre_tokens = {tok for tok in re.split(r"[\s,|/]+", genre_hint.strip()) if tok}
-    if ("anime" in genre_hint.lower()) or ("16" in genre_tokens):
+    is_japanese_animation = ANIMATION_GENRE_ID in genre_tokens and original_language == ANIME_LANGUAGE
+    if ("anime" in genre_hint.lower()) or is_japanese_animation:
         category = "Anime"
     elif media_type == "tv":
         category = "TV"
@@ -401,7 +406,8 @@ def process_title(api_key, query, args, image_size, type_filter="any", index=Non
     backdrops = pick_best_backdrop(images["backdrops"])
     posters   = images["posters"]
 
-    out_dir = get_output_dir(args.output, media_type, title, year, args.organised, genres_raw)
+    out_dir = get_output_dir(args.output, media_type, title, year, args.organised, genres_raw,
+                             selected.get("original_language", ""))
 
     if not backdrops:
         print(f"  [SKIP] No backdrops found for '{title}'")
@@ -569,7 +575,7 @@ def main():
 
         out_dir = get_output_dir(
             args.output, media_type, title, year,
-            args.organised, genres_raw
+            args.organised, genres_raw, selected.get("original_language", "")
         )
 
         if not backdrops:

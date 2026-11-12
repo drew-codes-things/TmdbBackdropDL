@@ -70,7 +70,7 @@ Prints which TMDB title each line would match without downloading any files.
 |---|---|
 | `--batch <file>` | Path to a `.txt` file with one title per line |
 | `--output <dir>` | Base output directory (default: `backdrops`) |
-| `--organised` | Sort output into `Movies/`, `TV/`, and `Anime/` subfolders |
+| `--organised` | Sort output into `Movies/`, `TV/`, and `Anime/` subfolders (Anime = animation originally in Japanese) |
 | `--posters` | Download poster images alongside backdrops |
 | `--type <any/movie/tv>` | Filter search results by media type (default: `any`) |
 | `--dry-run` | Batch only: preview matches without downloading |
